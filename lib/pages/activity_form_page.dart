@@ -1,96 +1,170 @@
 import 'package:flutter/material.dart';
-import '../model/activity.dart';
+import '../services/activity_service.dart';
 
 class ActivityFormPage extends StatefulWidget {
-  final Activity? activity;
-  final int? index;
-  final Function onSave;
 
-  ActivityFormPage({
-    this.activity,
-    this.index,
-    required this.onSave,
-  });
+  final Map? activity;
+
+  const ActivityFormPage({super.key, this.activity});
 
   @override
-  ActivityFormPageState createState() => ActivityFormPageState();
+  State<ActivityFormPage> createState() => _ActivityFormPageState();
 }
 
-class ActivityFormPageState extends State<ActivityFormPage> {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController durationController = TextEditingController();
-  final TextEditingController notesController = TextEditingController();
+class _ActivityFormPageState extends State<ActivityFormPage> {
+
+  final ActivityService service = ActivityService();
+
+  final _formKey = GlobalKey<FormState>();
+
+  final nameController = TextEditingController();
+  final durationController = TextEditingController();
+  final notesController = TextEditingController();
+
+  DateTime? selectedDate;
 
   @override
   void initState() {
     super.initState();
+
     if (widget.activity != null) {
-      nameController.text = widget.activity!.name;
-      durationController.text = widget.activity!.duration;
-      notesController.text = widget.activity!.notes;
+
+      nameController.text = widget.activity!['name'];
+      durationController.text = widget.activity!['duration'].toString();
+      notesController.text = widget.activity!['notes'] ?? "";
+
+      selectedDate = DateTime.parse(widget.activity!['date']);
     }
   }
 
-  void saveData() {
-    Activity activity = Activity(
-      name: nameController.text,
-      duration: durationController.text,
-      notes: notesController.text,
-    );
+  Future save() async {
+
+    if (!_formKey.currentState!.validate()) return;
+
+    final data = {
+      "name": nameController.text,
+      "duration": int.parse(durationController.text),
+      "notes": notesController.text,
+      "date": selectedDate.toString(),
+    };
 
     if (widget.activity == null) {
-      widget.onSave(activity);
+
+      await service.addActivity(data);
+
     } else {
-      widget.onSave(widget.index, activity);
+
+      await service.updateActivity(
+        widget.activity!['id'],
+        data,
+      );
     }
 
     Navigator.pop(context);
   }
 
+  Future pickDate() async {
+
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (date != null) {
+      setState(() {
+        selectedDate = date;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.activity == null
-            ? 'Tambah Aktivitas'
-            : 'Edit Aktivitas'),
+        title: Text(
+          widget.activity == null
+              ? "Tambah Activity"
+              : "Edit Activity",
+        ),
       ),
+
       body: Padding(
-        padding: EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                labelText: 'Nama Aktivitas',
-                prefixIcon: Icon(Icons.sports),
+        padding: const EdgeInsets.all(16),
+
+        child: Form(
+          key: _formKey,
+
+          child: Column(
+            children: [
+
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: "Nama Aktivitas",
+                ),
+                validator: (value) =>
+                    value!.isEmpty ? "Harus diisi" : null,
               ),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: durationController,
-              decoration: InputDecoration(
-                labelText: 'Durasi',
-                prefixIcon: Icon(Icons.timer),
+
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: durationController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: "Durasi (menit)",
+                ),
+                validator: (value) =>
+                    value!.isEmpty ? "Harus diisi" : null,
               ),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: notesController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: 'Catatan',
-                prefixIcon: Icon(Icons.note),
+
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: notesController,
+                decoration: const InputDecoration(
+                  labelText: "Catatan",
+                ),
               ),
-            ),
-            SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: saveData,
-              child: Text(widget.activity == null
-                  ? 'Simpan Aktivitas'
-                  : 'Update Aktivitas'),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              Row(
+                children: [
+
+                  Expanded(
+                    child: Text(
+                      selectedDate == null
+                          ? "Pilih tanggal"
+                          : selectedDate
+                              .toString()
+                              .split(" ")[0],
+                    ),
+                  ),
+
+                  ElevatedButton(
+                    onPressed: pickDate,
+                    child: const Text("Pilih"),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 30),
+
+              SizedBox(
+                width: double.infinity,
+
+                child: ElevatedButton(
+                  onPressed: save,
+                  child: const Text("Simpan"),
+                ),
+              )
+
+            ],
+          ),
         ),
       ),
     );
