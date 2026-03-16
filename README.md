@@ -110,13 +110,11 @@ Beberapa tampilan utama aplikasi:
 * Halaman List Activity
 * Halaman Tambah Activity
 * Halaman Edit Activity
-1.png
-2.png
-3.png
-4.png
-5.png
-
-
+https://github.com/KaLctrl/minpro-pab-2/raw/main/1.png
+https://github.com/KaLctrl/minpro-pab-2/raw/main/2.png
+https://github.com/KaLctrl/minpro-pab-2/raw/main/3.png
+https://github.com/KaLctrl/minpro-pab-2/raw/main/4.png
+https://github.com/KaLctrl/minpro-pab-2/raw/main/5.png
 ---
 
 #  Konfigurasi Supabase
